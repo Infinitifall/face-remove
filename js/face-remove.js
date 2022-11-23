@@ -266,8 +266,7 @@ function getFakeFaceIndex(face_index) {
  * @param {JSON} map_export
  * @returns {JSON} map_export
  */
-function removeFaces(map_export) 
-{
+function removeFaces(map_export) {
     let map_json = JSON.parse(map_export);
     map_json = getRealRProperty(map_json);
     map_json = getRealSProperty(map_json);    
@@ -278,6 +277,25 @@ function removeFaces(map_export)
     for(let i = 0; i < object_count ; i++) {
         if ('i' in map_objects[i]) {
             continue;
+        } else if ('o' in map_objects[i]) {
+            if (map_objects[i]['o'] != 1) {
+                continue;
+            }
+        } else if ('ft' in map_objects[i]) {
+            if (map_objects[i]['ft'] == 1) {
+                continue;
+            }
+        } else if ('v' in map_objects[i]) {
+            if (map_objects[i]['v'] == 1) {
+                continue;
+            }
+        } else if ('t' in map_objects[i]) {
+            if (map_objects[i]['t'] == 12) {
+                continue;
+
+            } else if (map_objects[i]['t'] == 7) {
+                continue;
+            }
         }
         console.log('Processing object ' + String(i));
         map_json.objects[i]['h'] = i;
