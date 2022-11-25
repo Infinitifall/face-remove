@@ -5,8 +5,12 @@
 
 #define DIVS 10
 #define OBJ_COUNT_MAX 10000
-#define MAX_DIGITS 10
+#define ERROR 0.01
+#define INPUT_FILE 'input.txt'
+#define OUTPUT_FILE 'output.txt'
 
+
+// Structs
 
 typedef struct matrix {
     double cells[3][3];
@@ -17,10 +21,12 @@ typedef struct vector {
     double cells[3];
 } Vector;
 
+
 typedef struct vector_list {
     int length;
-    Vector list[DIVS + 1];
+    Vector list[(DIVS + 1) * (DIVS + 1)];
 } VectorList;
+
 
 typedef struct cube {
     Vector p;
@@ -29,10 +35,14 @@ typedef struct cube {
     char f[6];
 } Cube;
 
+
 typedef struct cube_list {
     int length;
     Cube list[OBJ_COUNT_MAX];
 } CubeList;
+
+
+// Matrix functions
 
 
 Matrix newMatrix() {
@@ -62,13 +72,16 @@ Matrix matrixMultiply(Matrix matrix_1, Matrix matrix_2) {
     Matrix result = newMatrix();
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            for (int k = 0; k < 3; k ++) {
+            for (int k = 0; k < 3; k++) {
                 result.cells[i][j] += matrix_1.cells[i][k] * matrix_2.cells[k][j];
             }
         }
     }
     return result;
 }
+
+
+// Vector functions
 
 
 Vector newVector() {
@@ -188,6 +201,9 @@ Vector rotateVectorInverse(Vector vector, Vector r) {
 }
 
 
+// Cube functions
+
+
 Cube newCube() {
     Cube c;
     strcpy(c.f, "");
@@ -209,7 +225,7 @@ VectorList getSideVectors(Cube c) {
     double s1[3] = {c.s.cells[0], 0, 0};
     Vector temp_1 = rotateVector(newVectorValues(s1), c.r);
 
-    double s2[3] = {0, c.s.cells[0], 0};
+    double s2[3] = {0, c.s.cells[1], 0};
     Vector temp_2 = rotateVector(newVectorValues(s2), c.r);
 
     double s3[3] = {0, 0, c.s.cells[2]};
@@ -240,32 +256,36 @@ VectorList getFacePoints(Cube c, int face) {
     Vector vector_1_div = scaleVector(vector_1, 1.0 / DIVS);
     Vector vector_2_div = scaleVector(vector_2, 1.0 / DIVS);
 
-    VectorList points;
-    for (int i = 0; i <= DIVS; i ++) {
-        for (int j = 0; j <= DIVS; j ++) {
+    VectorList points = newVectorList();
+    for (int i = 0; i <= DIVS; i++) {
+        for (int j = 0; j <= DIVS; j++) {
             Vector temp_vector = addVectors(scaleVector(vector_1_div, i), scaleVector(vector_2_div, j));
             temp_vector = addVectors(temp_vector, offset);
-            points.list[i * DIVS + j] = temp_vector;
+            points.list[points.length] = temp_vector;
+            points.length += 1;
         }   
     }
     return points;
 }
 
 
-int checkPointInsideCube(Vector v, Cube c, double error) {
+int checkPointInsideCube(Vector v, Cube c) {
     Vector new_point = rotateVectorInverse(v, c.r);
     Vector new_p = rotateVectorInverse(c.p, c.r);
     new_point = addVectors(new_point, scaleVector(new_p, -1));
     if (
-        (-c.s.cells[0]/2 <= (new_point.cells[0] + error)) && ((new_point.cells[0] - error) <= c.s.cells[0]/2) &&
-        (-c.s.cells[1]/2 <= (new_point.cells[1] + error)) && ((new_point.cells[1] - error) <= c.s.cells[1]/2) &&
-        (-c.s.cells[2]/2 <= (new_point.cells[2] + error)) && ((new_point.cells[2] - error) <= c.s.cells[2]/2)
+        (-c.s.cells[0]/2 <= (new_point.cells[0] + ERROR)) && ((new_point.cells[0] - ERROR) <= c.s.cells[0]/2) &&
+        (-c.s.cells[1]/2 <= (new_point.cells[1] + ERROR)) && ((new_point.cells[1] - ERROR) <= c.s.cells[1]/2) &&
+        (-c.s.cells[2]/2 <= (new_point.cells[2] + ERROR)) && ((new_point.cells[2] - ERROR) <= c.s.cells[2]/2)
     ) {
         return 1;
     } else {
         return 0;
     }
 }
+
+
+// Housekeeping functions
 
 
 Cube getRealP(Cube c) {
@@ -295,71 +315,111 @@ int getFakeFaceIndex(int face_index) {
 }
 
 
-CubeList readInCubes() {
+// Read/write functions
+
+
+CubeList readInCubes(FILE *f) {
     CubeList cl;
     cl.length = 0;
 
     char *ptr;
-    char t[MAX_DIGITS];
+    char t[100];
     while(1) {
         Cube c;
 
-        if (scanf("%s", c.f) == EOF) {
+        if (fscanf(f, "%s", c.f) == EOF) {
             break;
         }
 
         for (int i = 0; i < 3; i++) {
-            scanf("%s", t);
+            fscanf(f, "%s", t);
             c.p.cells[i] = strtod(t, &ptr);
         }
 
         for (int i = 0; i < 3; i++) {
-            scanf("%s", t);
+            fscanf(f, "%s", t);
             c.s.cells[i] = strtod(t, &ptr);
         }
 
         for (int i = 0; i < 3; i++) {
-            scanf("%s", t);
+            fscanf(f, "%s", t);
             c.r.cells[i] = strtod(t, &ptr);
         }
 
         cl.list[cl.length] = c;
         cl.length += 1;
     }
-
     return cl;
 }
 
 
-void printOutCubes(CubeList cl) {
+void printOutCubes(CubeList cl, FILE *f) {
     for (int i = 0; i < cl.length; i++) {
-        printf("%s\n", cl.list[i].f);
-
-        // for (int j = 0; j < 3; j++) {
-        //     printf("%f\n", cl.list[i].p.cells[j]);
-        // }
-
-        // for (int j = 0; j < 3; j++) {
-        //     printf("%f\n", cl.list[i].s.cells[j]);
-        // }
-
-        // for (int j = 0; j < 3; j++) {
-        //     printf("%f\n", cl.list[i].r.cells[j]);
-        // }
+        fprintf(f, "%s\n", cl.list[i].f);
     }
 }
 
 
+// The face remove algorithm
+
+
+CubeList removeFaces(CubeList cl) {
+    int face_count_old = 0;
+    int face_count_new = 0;
+    for(int i = 0; i < cl.length ; i++) {
+        printf("Processing object %d\n", i);
+        Cube c = cl.list[i];
+        c = getRealP(c);
+        for(int face = 0; face < 6 ; face++) {
+            int face_fake = getFakeFaceIndex(face);
+            if (c.f[face_fake] == '0') {
+                continue;
+            }
+            VectorList face_points = getFacePoints(c, face);
+            int covered = 1;
+            for (int j = 0; j < face_points.length; j++) {
+                int covered_once = 0;
+                for(int k = 0; k < cl.length ; k++) {
+                    if (i == k) {
+                        continue;
+                    }
+                    Cube c2 = cl.list[k];
+                    c2 = getRealP(c2);
+                    if (checkPointInsideCube(face_points.list[j], c2)) {
+                        covered_once = 1;
+                        break;
+                    }
+                }
+                if (covered_once == 0) {
+                    covered = 0;
+                    break;
+                }
+            }
+            if (covered) {
+                cl.list[i].f[face_fake] = '0';
+                face_count_old += 1;
+            } else {
+                face_count_old += 1;
+                face_count_new += 1;
+            }
+        }
+    }
+    printf("Old face count %d\n", face_count_old);
+    printf("New face count %d\n", face_count_new);
+    printf("Reduction %.2f%%\n", (100.0 * (face_count_old - face_count_new) / face_count_old));
+    return cl;
+}
+
+
 int main(int argc, char const *argv[]) {
-    // double s[3] = {1, 1, 1};
-    // Vector v = newVectorValues(s);
-    // double r[3] = {0, 1, 0};
-    // Vector w = newVectorValues(r);
-    // Vector y = rotateVectorInverse(v, w);
-    // printf("%f, %f, %f \n", y.cells[0], y.cells[1], y.cells[2]);
+    FILE *fptr_input = fopen("input.txt", "r");
+    FILE *fptr_output = fopen("output.txt", "w");
 
-    CubeList cl = readInCubes();
-    printOutCubes(cl);
+    CubeList cl = readInCubes(fptr_input);
+    cl = removeFaces(cl);
+    printOutCubes(cl, fptr_output);
 
+    fclose(fptr_input);
+    fclose(fptr_output);
     return 0;
 }
