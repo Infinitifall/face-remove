@@ -30,8 +30,7 @@ def checkIfUse(map_object: dict):
     elif 't' in map_object:
         if map_object['t'] in [7, 12]:
             return False
-    else:
-        return True
+    return True
 
 
 def make_c_input(map_export: dict):
