@@ -3,11 +3,9 @@
 #include <math.h>
 #include <string.h>
 
-#define DIVS 10
+#define DIVS 20
 #define OBJ_COUNT_MAX 10000
 #define ERROR 0.01
-#define INPUT_FILE 'input.txt'
-#define OUTPUT_FILE 'output.txt'
 
 
 // Structs
@@ -46,11 +44,10 @@ typedef struct cube_list {
 
 
 Matrix newMatrix() {
-    double cells[3][3] = {{0,0,0},{0,0,0},{0,0,0}};
     Matrix result;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            result.cells[i][j] = cells[i][j];
+            result.cells[i][j] = 0;
         }
     }
     return result;
@@ -86,9 +83,8 @@ Matrix matrixMultiply(Matrix matrix_1, Matrix matrix_2) {
 
 Vector newVector() {
     Vector result;
-    double cells[3] = {0,0,0};
     for (int i = 0; i < 3; i++) {
-        result.cells[i] = cells[i];
+        result.cells[i] = 0;
     }
     return result;
 }
@@ -137,7 +133,7 @@ Vector matrixVectorMultiply(Matrix matrix_1, Vector matrix_2) {
 }
 
 
-Vector rotateVector(Vector vector, Vector r) {
+Vector rotateVector3D(Vector vector, Vector r) {
     Vector result = newVector();
     for (int i = 0; i < 3; i++) {
         result.cells[i] = vector.cells[i];
@@ -169,7 +165,7 @@ Vector rotateVector(Vector vector, Vector r) {
 }
 
 
-Vector rotateVectorInverse(Vector vector, Vector r) {
+Vector rotateVector3DInverse(Vector vector, Vector r) {
     Vector result = newVector();
     for (int i = 0; i < 3; i++) {
         result.cells[i] = vector.cells[i];
@@ -222,15 +218,14 @@ CubeList newCubeList() {
 
 
 VectorList getSideVectors(Cube c) {
-    double s1[3] = {c.s.cells[0], 0, 0};
-    Vector temp_1 = rotateVector(newVectorValues(s1), c.r);
+    double s1[] = {c.s.cells[0], 0, 0};
+    Vector temp_1 = rotateVector3D(newVectorValues(s1), c.r);
 
-    double s2[3] = {0, c.s.cells[1], 0};
-    Vector temp_2 = rotateVector(newVectorValues(s2), c.r);
+    double s2[] = {0, c.s.cells[1], 0};
+    Vector temp_2 = rotateVector3D(newVectorValues(s2), c.r);
 
-    double s3[3] = {0, 0, c.s.cells[2]};
-    Vector v3 = newVectorValues(s3);
-    Vector temp_3 = rotateVector(v3, c.r);
+    double s3[] = {0, 0, c.s.cells[2]};
+    Vector temp_3 = rotateVector3D(newVectorValues(s3), c.r);
 
     VectorList result;
     result.list[0] = temp_1;
@@ -270,8 +265,8 @@ VectorList getFacePoints(Cube c, int face) {
 
 
 int checkPointInsideCube(Vector v, Cube c) {
-    Vector new_point = rotateVectorInverse(v, c.r);
-    Vector new_p = rotateVectorInverse(c.p, c.r);
+    Vector new_point = rotateVector3DInverse(v, c.r);
+    Vector new_p = rotateVector3DInverse(c.p, c.r);
     new_point = addVectors(new_point, scaleVector(new_p, -1));
     if (
         (-c.s.cells[0]/2 <= (new_point.cells[0] + ERROR)) && ((new_point.cells[0] - ERROR) <= c.s.cells[0]/2) &&
@@ -290,7 +285,7 @@ int checkPointInsideCube(Vector v, Cube c) {
 
 Cube getRealP(Cube c) {
     double s2[3] = {0, c.s.cells[1] / 2,0};
-    c.p = addVectors(c.p, rotateVector(newVectorValues(s2), c.r));
+    c.p = addVectors(c.p, rotateVector3D(newVectorValues(s2), c.r));
     return c;
 }
 
@@ -366,8 +361,11 @@ void printOutCubes(CubeList cl, FILE *f) {
 CubeList removeFaces(CubeList cl) {
     int face_count_old = 0;
     int face_count_new = 0;
+    printf("   Object    Checks    Hidden\n");
     for(int i = 0; i < cl.length ; i++) {
-        printf("Processing object %d\n", i);
+        printf("%4d/%4d", i + 1, cl.length);
+        int checks = 0;
+        int hidden = 0;
         Cube c = cl.list[i];
         c = getRealP(c);
         for(int face = 0; face < 6 ; face++) {
@@ -389,6 +387,7 @@ CubeList removeFaces(CubeList cl) {
                         covered_once = 1;
                         break;
                     }
+                    checks += 1;
                 }
                 if (covered_once == 0) {
                     covered = 0;
@@ -398,15 +397,18 @@ CubeList removeFaces(CubeList cl) {
             if (covered) {
                 cl.list[i].f[face_fake] = '0';
                 face_count_old += 1;
+                hidden += 1;
             } else {
                 face_count_old += 1;
                 face_count_new += 1;
             }
         }
+        printf("    %6.1fk    %d/6\n", checks/1000.0, hidden);
     }
-    printf("Old face count %d\n", face_count_old);
-    printf("New face count %d\n", face_count_new);
-    printf("Reduction %.2f%%\n", (100.0 * (face_count_old - face_count_new) / face_count_old));
+    printf("\n");
+    printf("Old face count: %d\n", face_count_old);
+    printf("New face count: %d\n", face_count_new);
+    printf("Reduction: %.2f%%\n", (100.0 * (face_count_old - face_count_new) / face_count_old));
     return cl;
 }
 
