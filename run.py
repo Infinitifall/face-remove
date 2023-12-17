@@ -1,7 +1,6 @@
 import json
 import subprocess
-
-from time import sleep
+import os
 
 
 def getRealSProperty(map_json: dict):
@@ -88,16 +87,23 @@ def make_c_output(map_export: dict, c_output: str):
 
 
 if __name__ == '__main__':
+    # convert input.json to input.txt for x program
     json_input = json.load(open('input.json', 'r'))
     c_input = make_c_input(json_input);
     open('input.txt', 'w').write(c_input)
 
+    # call c program
     print('Starting face-remove\n')
     subprocess.call(["./face-remove"])
 
+    # convert output.txt from c program to output.json
     c_output = open('output.txt', 'r').read()
     json_output = make_c_output(json_input, c_output);
     json.dump(json_output, open('output.json', 'w'))
+
+    # remove temp files
+    os.remove("input.txt")
+    os.remove("output.txt")
 
     print('\nOutput is in output.json :)')
 
