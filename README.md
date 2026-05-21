@@ -35,10 +35,10 @@ To determine if a face is hidden we check if all points on an $n \times n$ grid 
 
 In the image below, the yellow cube and the blue cube will have one face each disabled, as they are hidden inside the purple and the green cubes respectively.
 
-![Cubes in various positions and orientations, some with their faces hidden](./face-remove_1.png)
+![Cubes in various positions and orientations, some with their faces hidden](./images/face-remove_1.png)
 
 
 In the image below, the orange cube will have one face disabled, as it is hidden by the other three cubes put together.
 
-![Multiple cubes together cover up the orange cubes face](./face-remove_2.png)
+![Multiple cubes together cover up the orange cubes face](./images/face-remove_2.png)
 
