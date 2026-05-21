@@ -3,6 +3,13 @@ import subprocess
 import os
 
 
+INPUT_JSON  = 'data/input.json'
+INPUT_TXT   = 'data/input.txt'
+OUTPUT_JSON = 'data/output.json'
+OUTPUT_TXT  = 'data/output.txt'
+FACE_REMOVE = 'build/face-remove'
+
+
 def getRealSProperty(map_json: dict):
     for i in range(len(map_json['objects'])):
         if 'si' in map_json['objects'][i]:
@@ -88,22 +95,16 @@ def make_c_output(map_export: dict, c_output: str):
 
 if __name__ == '__main__':
     # convert input.json to input.txt for x program
-    json_input = json.load(open('input.json', 'r'))
+    json_input = json.load(open(INPUT_JSON, 'r'))
     c_input = make_c_input(json_input);
-    open('input.txt', 'w').write(c_input)
+    open(INPUT_TXT, 'w').write(c_input)
 
     # call c program
     print('Starting face-remove\n')
-    subprocess.call(["./face-remove"])
+    subprocess.call([FACE_REMOVE])
 
     # convert output.txt from c program to output.json
-    c_output = open('output.txt', 'r').read()
+    c_output = open(OUTPUT_TXT, 'r').read()
     json_output = make_c_output(json_input, c_output);
-    json.dump(json_output, open('output.json', 'w'))
-
-    # remove temp files
-    os.remove("input.txt")
-    os.remove("output.txt")
-
+    json.dump(json_output, open(OUTPUT_JSON, 'w'))
     print('\nOutput is in output.json :)')
-

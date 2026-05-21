@@ -56,9 +56,5 @@ dkms.conf
 
 # project specific
 
-face-remove
-
-input.txt
-output.txt
-input.json
-output.json
+build/*
+data/*
