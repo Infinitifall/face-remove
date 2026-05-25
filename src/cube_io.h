@@ -10,6 +10,7 @@
 
 CubeList* readInCubes(const char *s);
 char* printOutCubes(const CubeList* cl);
+int getFakeFaceIndex(int face_index);
 
 
 #endif

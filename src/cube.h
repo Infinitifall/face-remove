@@ -1,3 +1,6 @@
+#include <stddef.h>
+#include <stdbool.h>
+
 #include "vector.h"
 #include "matrix.h"
 
@@ -12,7 +15,8 @@
 
 typedef struct {
     Vector3 p, s, r;
-    char f[6];
+    char f_new[7];
+    char f_old[7];
 
     // what the editor uses
     Vector3 p_fake;
@@ -42,6 +46,7 @@ typedef struct {
 
 CubeList* newCubeList(size_t length);
 void freeCubeList(CubeList* cl, bool free_cubes);
+size_t faceCount(CubeList* cl, bool old);
 CubeList* getTouchingCubes(const Cube* c, const CubeList* cl);
 
 

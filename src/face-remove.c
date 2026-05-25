@@ -1,27 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
-
-// #include <emscripten.h>
 
 #include "face-remove.h"
 #include "cube_io.h"
+#ifndef __EMSCRIPTEN__
 #include "file_io.h"
-
-
-int getFakeFaceIndex(int face_index) {
-    // assert((face_index >= 0) && (face_index < 6));
-    const int lookup[6] = {4, 1, 2, 5, 0, 3};
-    return lookup[face_index];
-}
+#else
+#include <emscripten.h>  // for EMSCRIPTEN_KEEPALIVE; alternatively use -s "EXPORTED_FUNCTIONS
+#endif
 
 
 void removeFaces(CubeList* cl) {
-    printf("|   Object #  |   Calcs    |  Hidden  |\n");
-    printf("|-------------|------------|----------|\n");
-
-    size_t face_count_old = 0;
-    size_t face_count_new = 0;
+    printf("| Obj # |  Old   |  New   |\n");
+    printf("|-------|--------|--------|\n");
 
     // populate fields for better performance
     for(size_t i = 0; i < cl->length ; i++) {
@@ -29,19 +22,15 @@ void removeFaces(CubeList* cl) {
     }
 
     for(size_t i = 0; i < cl->length ; i++) {
-        printf("|%5zu/%5zu", i + 1, cl->length);
-
-        size_t checks = 0;
-        int hidden = 0;
-
         Cube *c = cl->cubes[i];
         CubeList *cl_touching = getTouchingCubes(c, cl);
 
         for(int face = 0; face < 6 ; face++) {
             const int face_fake_index = getFakeFaceIndex(face);
 
-            if (c->f[face_fake_index] == '0') {
-                continue;  // face is disabled already; skip
+            if (c->f_new[face_fake_index] == '0') {
+                // face is disabled already; skip
+                continue;
             }
 
             // check if every vertex is inside the same cube; easy wins
@@ -63,9 +52,7 @@ void removeFaces(CubeList* cl) {
             }
             freeVectorList(vertex_points);
             if (covered_1) {
-                cl->cubes[i]->f[face_fake_index] = '0';
-                face_count_old += 1;
-                hidden += 1;
+                c->f_new[face_fake_index] = '0';
                 continue;
             }
 
@@ -81,7 +68,6 @@ void removeFaces(CubeList* cl) {
                         covered_once = true;
                         break;
                     }
-                    checks += 1;
                 }
                 if (!covered_once) {
                     covered_2 = false;
@@ -90,34 +76,36 @@ void removeFaces(CubeList* cl) {
             }
             freeVectorList(face_points);
             if (covered_2) {
-                cl->cubes[i]->f[face_fake_index] = '0';
-                face_count_old += 1;
-                hidden += 1;
+                c->f_new[face_fake_index] = '0';
                 continue;
             }
-
-            face_count_old += 1;
-            face_count_new += 1;
         }
 
         freeCubeList(cl_touching, false);
 
-        if (checks < 1000) {
-            printf("  |  %6zu    |   %d/6    |\n", checks, hidden);
-        } else {
-            printf("  |  %5.1fk    |   %d/6    |\n", checks/1000.0, hidden);
+        if (strcmp(c->f_old, c->f_new)) {
+            printf("|%6zu | %s | %s |\n", i + 1, c->f_old, c->f_new);
         }
     }
 
-    printf("|-------------|------------|----------|\n");
-    printf("|   Object #  |   Calcs    |  Hidden  |\n");
+    size_t face_count_old = faceCount(cl, true);
+    size_t face_count_new = faceCount(cl, false);
+
+    printf("|-------|--------|--------|\n");
+    printf("| Obj # |  Old   |  New   |\n");
     printf("\n");
-    printf("Old face count: %zu\n", face_count_old);
-    printf("New face count: %zu\n", face_count_new);
-    printf("Reduction: %.2f%%\n", (100.0 * (face_count_old - face_count_new) / face_count_old));
+    printf(
+        "Faces disabled: %.2f%%  (%zu out of %zu)\n",
+        (100.0 * (face_count_old - face_count_new) / face_count_old),
+        face_count_old - face_count_new,
+        face_count_old
+    );
 }
 
 
+#ifdef __EMSCRIPTEN__
+EMSCRIPTEN_KEEPALIVE
+#endif
 char* removeFacesWrapper(const char* s_input) {
     CubeList *cl = readInCubes(s_input);
     removeFaces(cl);
@@ -127,6 +115,16 @@ char* removeFacesWrapper(const char* s_input) {
 }
 
 
+#ifdef __EMSCRIPTEN__
+EMSCRIPTEN_KEEPALIVE
+#endif
+double test_wasm() {
+    printf("Hello World from C :)\n");  // end \n is important!
+    return 3.14;
+}
+
+
+#ifndef __EMSCRIPTEN__
 int main() {
     char *s_input = slurpFile("data/input.txt");
     char *s_output = removeFacesWrapper(s_input);
@@ -135,3 +133,4 @@ int main() {
     free(s_output);
     return 0;
 }
+#endif

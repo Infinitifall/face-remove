@@ -15,11 +15,18 @@ CubeList* readInCubes(const char *s) {
     while(true) {
         Cube *c = malloc(sizeof(*c));
 
-        if (sscanf(p, "%s%n", c->f, &consumed) != 1) {
+        if (sscanf(p, "%s%n", c->f_old, &consumed) != 1) {
             free(c);
             break;
         }
         p += consumed;
+
+        for (int i = 0; i < 6; i++) {
+            c->f_new[i] = c->f_old[i];
+        }
+
+        c->f_old[6] = '\0';
+        c->f_new[6] = '\0';
 
         for (int i = 0; i < 3; i++) {
             sscanf(p, "%s%n", t, &consumed);
@@ -60,8 +67,15 @@ char* printOutCubes(const CubeList* cl) {
     char *s = malloc((cl->length * face_string_size + 1) * sizeof(*s));
     char *p = s;
     for (size_t i = 0; i < cl->length; i++) {
-        p += sprintf(p, "%s\n", cl->cubes[i]->f);
+        p += sprintf(p, "%s\n", cl->cubes[i]->f_new);
     }
     *p = '\0';
     return s;
+}
+
+
+int getFakeFaceIndex(int face_index) {
+    // assert((face_index >= 0) && (face_index < 6));
+    const int lookup[6] = {4, 1, 2, 5, 0, 3};
+    return lookup[face_index];
 }

@@ -1,26 +1,7 @@
 #include <stdlib.h>
-#include <stdbool.h>
 #include <math.h>
 
 #include "cube.h"
-
-
-CubeList* newCubeList(size_t length) {
-    CubeList *cl = malloc(sizeof(*cl));
-    cl->length = length;
-    cl->cubes = malloc(length * sizeof(*cl->cubes));
-    for (size_t i = 0; i < length; i++) { cl->cubes[i] = NULL; }
-    return cl;
-}
-
-
-void freeCubeList(CubeList* cl, bool free_cubes) {
-    if (free_cubes) {
-        for (size_t i = 0; i < cl->length; i++) { free(cl->cubes[i]); }
-    }
-    free(cl->cubes);
-    free(cl);
-}
 
 
 
@@ -118,6 +99,37 @@ bool checkPointInsideCube(const Vector3 *v, const Cube *c) {
         (-c->s.values[1]/2 <= (v2.values[1] + ERROR)) && ((v2.values[1] - ERROR) <= c->s.values[1]/2) &&
         (-c->s.values[2]/2 <= (v2.values[2] + ERROR)) && ((v2.values[2] - ERROR) <= c->s.values[2]/2)
     );
+}
+
+
+CubeList* newCubeList(size_t length) {
+    CubeList *cl = malloc(sizeof(*cl));
+    cl->length = length;
+    cl->cubes = malloc(length * sizeof(*cl->cubes));
+    for (size_t i = 0; i < length; i++) { cl->cubes[i] = NULL; }
+    return cl;
+}
+
+
+void freeCubeList(CubeList* cl, bool free_cubes) {
+    if (free_cubes) {
+        for (size_t i = 0; i < cl->length; i++) { free(cl->cubes[i]); }
+    }
+    free(cl->cubes);
+    free(cl);
+}
+
+
+size_t faceCount(CubeList* cl, bool old) {
+    size_t face_count = 0;
+    for (size_t i = 0; i <  cl->length; i++) {
+        Cube *c = cl->cubes[i];
+        for (int j = 0; j < 6; j++) {
+            char face_bit = old ? c->f_old[j] : c->f_new[j];
+            face_count += (face_bit == '1');
+        }
+    }
+    return face_count;
 }
 
 
