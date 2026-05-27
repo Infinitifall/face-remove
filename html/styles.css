@@ -1,0 +1,40 @@
+body {
+    background-color: #2F3136;
+    color: #fff;
+    font-family: sans-serif;
+    font-size: 16px;
+    padding: 20px 20px
+}
+
+textarea {
+    background-color: #222427;
+    color: #fff;
+    font-family: monospace;
+    font-size: 16px;
+    border: none;
+    padding: 10px 10px;
+    height: 10em;
+    width: 30vw;
+    resize: none;
+}
+
+button {
+    background-color: #32571e;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    padding: 5px 5px;
+    margin: 1em 1em ;
+}
+
+textarea#output_log {
+    float: right;
+    background-color: #000;
+    color: #666;
+    font-size: 13px;
+    height: 70vh;
+}
+
+button:active {
+    background-color: #142908;
+}

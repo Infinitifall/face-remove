@@ -4,12 +4,27 @@
         {
             "label": "make",
             "type": "shell",
-            "command": "make clean all"
+            "command": "make all"
+        },
+        {
+            "label": "make native",
+            "type": "shell",
+            "command": "make native"
         },
         {
             "label": "make debug",
             "type": "shell",
-            "command": "make clean debug"
+            "command": "make debug"
+        },
+        {
+            "label": "make wasm",
+            "type": "shell",
+            "command": "make wasm"
+        },
+        {
+            "label": "make clean",
+            "type": "shell",
+            "command": "make clean"
         }
     ]
 }
